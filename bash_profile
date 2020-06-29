@@ -3,6 +3,8 @@
 export PATH="$PATH:/usr/local/bin"
 or
 export PATH="$PATH:/bin"
+or
+export PATH="$PATH:/usr/bin"
 ====================================
 
 # Creating Python Virtual Environment in Linux 
