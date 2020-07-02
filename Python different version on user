@@ -1,0 +1,25 @@
+yum install python3
+Install python from root
+
+create new user
+check python -V  ==> 2.7
+
+and paste the below line in bashrc and bash_aliases
+
+vim ~/.bashrc
+---------------------------
+if [ -f ~/.bash_aliases ]; then
+. ~/.bash_aliases
+fi
+
+# User specific aliases and function
+python='/usr/bin/python3.6'
+--------------------
+
+vim ~/.bash_aliases
+-------------------
+alias python='/usr/bin/python3.6'
+------------------
+
+exit from user and login again and check
+python -V  ==> 3.6
