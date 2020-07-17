@@ -1,0 +1,16 @@
+
+
+from root user
+
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.1/install.sh |   NVM_DIR=/usr/local/nvm bash
+
+
+cat >>/etc/profile.d/nvm.sh<<EOF
+#!/usr/bin/env bash 
+export NVM_DIR="/usr/local/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+EOF
+
+sh /etc/profile.d/nvm.sh
+
+
