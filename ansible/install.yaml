@@ -1,0 +1,191 @@
+---
+- hosts: deploy
+  remote_user: root
+  vars:
+    php_version: php5.6
+  tasks:      
+   - name: yum update
+     yum:
+       name: "*"
+       state: latest
+   - name: Installing package
+     yum: 
+       name:
+         - git
+         - httpd
+         - mysql
+         - epel-release
+         - curl
+         - wget
+         - traceroute
+         - telnet
+         - yum-utils
+         - vim
+         - lynx
+         - openssl-devel
+         - gcc
+         - memcached
+         - mod_ssl
+       state: present
+   - name: enable redis for rpm
+     yum:
+       name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+       state: installed
+     #shell: yum --enablerepo=remi install redis
+   - name: installing redis
+     yum: 
+       name: redis
+       state: present  
+   - name: Disable SELinux
+     selinux:
+       state: disabled
+   - name: disable selinux permanent config file
+     lineinfile:
+       path: /etc/selinux/config
+       regexp: '^SELINUX='
+       line: SELINUX=disabled
+     #replace:
+       #path: /etc/selinux/config
+       #regexp: 'enforcing'
+       #replace: "disabled"
+   - name: time set in host machine
+     file: path=/etc/localtime state=absent
+     file:
+       src: /usr/share/zoneinfo/Asia/Kolkata
+       dest: /etc/localtime
+       state: link
+   - name: Stop and disable firewalld.
+     service:
+       name: firewalld
+       state: stopped
+       enabled: False
+   - name: start and enable httpd
+     service:
+       name: httpd
+       state: started
+       enabled: yes
+   - name: apache ServerSignature off
+     lineinfile:
+       path: /etc/httpd/conf/httpd.conf
+       line: ServerSignature Off
+   - name: apache ServerTokens prod
+     lineinfile:
+       path: /etc/httpd/conf/httpd.conf
+       line: ServerTokens Prod
+   - name: add mongo repo
+     yum_repository:
+       name: mongo-repo
+       description: MongoDB Repository
+       baseurl: https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/3.4/x86_64/
+       enabled: yes
+       gpgcheck: 1
+       gpgkey: https://www.mongodb.org/static/pgp/server-3.4.asc
+   - name: install mongo
+     yum: name=mongodb-org state=present
+   - name: make directory and change owner
+     file:
+       path: /data
+       state: directory
+       mode: '0755'
+   - name: deployer user add
+     user:
+       name: deployer
+       groups: apache
+       home: /data/deployer
+       generate_ssh_key: yes
+   - name: replace key with deployer user
+     #command: truncate -s 0 /home/deployer/.ssh/id_rsa* 
+     #command: truncate -s 0 /home/deployer/.ssh/id_rsa.pub 
+     shell: /bin/rm -rf /data/deployer/.ssh/*
+   - name: copy deployer key to host machine
+     copy: src={{ item.src }} dest={{ item.dest }}
+     with_items:
+       - { src: '/root/id_rsa', dest: '/data/deployer/.ssh/' }
+       - { src: '/root/id_rsa.pub', dest: '/data/deployer/.ssh/' }
+   - name: change owner of deplyer key
+     file:
+       path: /data/deployer/.ssh/
+       owner: deployer
+       group: deployer
+       recurse: yes
+       mode: '0644'    
+   - name: move deployer to data
+     file: path=/home/deployer state=absent
+     file:
+       src: /data/deployer
+       dest: /home/deployer
+       #recurse: yes
+       owner: deployer
+       group: deployer
+       state: link
+   - name: Add deployer to apache groups
+     user: name=deloyer
+           groups=apache
+           append=yes
+   - name: make directory and change owner
+     file:
+       path: /data/config
+       state: directory
+       owner: deployer
+       group: deployer
+     file:
+       src: /data/config
+       dest: /var/config
+       owner: deployer
+       group: deployer
+       state: link
+   - name: enable rpm for php
+     yum:
+       name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+       state: installed
+   - name: Install package 5.6
+     shell: yum-config-manager --enable remi-php56
+     when: php_version == "php5.6"
+   - name: Install package 7.2
+     shell: yum-config-manager --enable remi-php72
+     when: php_version == "php7.2"
+   - name: Install package 7.4
+     shell: yum-config-manager --enable remi-php74
+     when: php_version == "php7.4"
+   - name: install php package
+     yum: 
+       state: present
+       name:
+         - php
+         - php-cli
+         - php-pear
+         - php-devel
+         - php-gd
+         - php-bcmath
+         - php-intl
+         - php-mcrypt
+         - php-curl
+         - php-mysql
+         - php-ldap
+         - php-zip
+         - php-fileinfo
+         - php-xml
+         - php-tidy
+         - php-mbstring
+         - php-bcmath
+         - php-redis
+         - php-imap
+         - php-tcpdf
+         - php-pecl-mongo
+         - php-pecl-mongodb
+         - php-pecl-memcache
+         - php-fileinfo
+         - composer
+         - php-fpm
+         - php-mysqlnd
+         - php-json
+         - php-mongodb  
+   - name: install nvm 
+     shell: curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.1/install.sh | NVM_DIR=/usr/local/nvm bash
+     shell: source ~/.bashrc
+   - name: copy script of nvm
+     copy:
+       src: /root/nvm.sh
+       dest: /etc/profile.d/
+       mode: a+x
+ 
