@@ -1,0 +1,96 @@
+---
+- hosts: deploy
+  remote_user: root
+  vars:
+    mysql_root_password: "Test@123"
+  tasks:      
+   - name: yum update
+     yum:
+       name: "*"
+       state: latest
+   - name: Installing package
+     yum: 
+       name:
+         - git
+         - epel-release
+         - curl
+         - wget
+         - traceroute
+         - telnet
+         - yum-utils
+         - vim
+         - lynx
+         - openssl-devel
+         - memcached
+         - mod_ssl
+       state: present
+   - name: enable redis for rpm
+     yum:
+       name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+       state: installed
+     #shell: yum --enablerepo=remi install redis
+     # - name: installing redis
+     #yum: 
+     # name: redis
+     #  state: present  
+   - name: Disable SELinux
+     selinux:
+       state: disabled
+   - name: disable selinux permanent config file
+     lineinfile:
+       path: /etc/selinux/config
+       regexp: '^SELINUX='
+       line: SELINUX=disabled
+   - name: Disable SELinux
+     selinux:
+       state: disabled
+   - name: time set in host machine
+     file: path=/etc/localtime state=absent
+     file:
+       src: /usr/share/zoneinfo/Asia/Kolkata
+       dest: /etc/localtime
+       state: link
+   - name: Stop and disable firewalld.
+     service:
+       name: firewalld
+       state: stopped
+       enabled: False
+   - name: add mongo repo
+     yum_repository:
+       name: mongo-repo
+       description: MongoDB Repository
+       baseurl: https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/3.4/x86_64/
+       enabled: yes
+       gpgcheck: 1
+       gpgkey: https://www.mongodb.org/static/pgp/server-3.4.asc
+   - name: install mongo
+     yum: name=mongodb-org state=present
+   - name: start mariadb
+     service:
+       name: mongod
+       enabled: true
+       state: started
+   - name: make directory and change owner
+     file:
+       path: /data
+       state: directory
+       mode: '0755'
+   - name: add mariadb repo
+     yum_repository:
+       name: MariaDB
+       description: MariaDB
+       baseurl: http://yum.mariadb.org/10.1/centos7-amd64
+       gpgcheck: 1
+       gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+   - name: install mariadb
+     yum:
+       name:
+         - MariaDB-server
+         - MariaDB-client
+       state: latest       
+   - name: start mariadb
+     service:
+       name: mariadb
+       enabled: true
+       state: started
+
