@@ -26,6 +26,7 @@
          - gcc
          - memcached
          - mod_ssl
+         - screen
        state: present
    - name: enable redis for rpm
      yum:
@@ -36,9 +37,6 @@
      yum: 
        name: redis
        state: present  
-   - name: Disable SELinux
-     selinux:
-       state: disabled
    - name: disable selinux permanent config file
      lineinfile:
        path: /etc/selinux/config
@@ -75,6 +73,14 @@
      lineinfile:
        path: /etc/httpd/conf/httpd.conf
        line: ServerTokens Prod
+   - name: x-frame apache
+     lineinfile:
+       path: /etc/httpd/conf/httpd.conf
+       line: Header set X-Frame-Options SAMEORIGIN
+   - name: Strict-Transport-Security
+     lineinfile:
+       path: /etc/httpd/conf/httpd.conf
+       line: Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"
    - name: add mongo repo
      yum_repository:
        name: mongo-repo
@@ -90,6 +96,12 @@
        path: /data
        state: directory
        mode: '0755'
+   - name: make directory and change owner
+     file:
+       path: /data/config
+       state: directory
+       mode: '0755'
+       
    - name: deployer user add
      user:
        name: deployer
@@ -103,15 +115,15 @@
    - name: copy deployer key to host machine
      copy: src={{ item.src }} dest={{ item.dest }}
      with_items:
-       - { src: '/root/id_rsa', dest: '/data/deployer/.ssh/' }
-       - { src: '/root/id_rsa.pub', dest: '/data/deployer/.ssh/' }
+       - { src: '/home/gauravyada/git_gauravrao08/server-start-script/ansible/id_rsa', dest: '/data/deployer/.ssh/' }
+       - { src: '/home/gauravyada/git_gauravrao08/server-start-script/ansible/id_rsa.pub', dest: '/data/deployer/.ssh/' }
    - name: change owner of deplyer key
      file:
        path: /data/deployer/.ssh/
        owner: deployer
        group: deployer
        recurse: yes
-       mode: '0644'    
+       mode: '0700'    
    - name: move deployer to data
      file: path=/home/deployer state=absent
      file:
@@ -122,7 +134,7 @@
        group: deployer
        state: link
    - name: Add deployer to apache groups
-     user: name=deloyer
+     user: name=deployer
            groups=apache
            append=yes
    - name: make directory and change owner
@@ -137,6 +149,7 @@
        owner: deployer
        group: deployer
        state: link
+       force: yes
    - name: enable rpm for php
      yum:
        name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
@@ -183,17 +196,21 @@
          - php-mysqlnd
          - php-json
          - php-mongodb  
-   - name: disable selinux permanent config file
+   - name: expose_php off
      lineinfile:
        path: /etc/php.ini
-       regexp: '^expose_php='
-       line: expose_php=Off
+       regexp: '^expose_php ='
+       line: expose_php = Off
    - name: install nvm 
      shell: curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.1/install.sh | NVM_DIR=/usr/local/nvm bash
      shell: source ~/.bashrc
    - name: copy script of nvm
      copy:
-       src: /root/nvm.sh
+       src: /home/gauravyada/git_gauravrao08/server-start-script/ansible/nvm.sh
        dest: /etc/profile.d/
        mode: a+x
+   - name: php time set
+     lineinfile:
+       path: /etc/php.ini
+       line: date.timezone=Asia/Kolkata
  
