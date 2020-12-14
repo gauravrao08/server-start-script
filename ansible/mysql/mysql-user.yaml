@@ -1,0 +1,18 @@
+---
+- hosts: mysql
+  remote_user: root
+  tasks:      
+   - include_vars: var.yml
+   - include_vars: db-detail.yml
+   - name: Create user user
+     mysql_user:
+       name: "{{ db_user }}"
+       password: "{{ db_password }}"
+       host: localhost
+       state: present
+       update_password: on_create
+       priv: "{{ db_name }}.*:ALL"
+
+
+
+#ansible-playbook mysql-user.yaml --vault-password-file vault_pass.txt

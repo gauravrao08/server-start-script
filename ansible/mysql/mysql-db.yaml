@@ -1,0 +1,12 @@
+---
+- hosts: mysql
+  remote_user: root
+  tasks:      
+   - include_vars: var.yml
+   - name: create DB
+     mysql_db:
+             login_user: "{{ user}}"
+             login_password: "{{ password }}"
+             name: pagal
+             state: present
+   

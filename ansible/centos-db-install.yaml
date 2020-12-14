@@ -1,11 +1,13 @@
 ---
-- hosts: deploy
+- hosts: db
+  become: true
+  become_method: sudo
   remote_user: root
   tasks:      
-   - name: yum update
-     yum:
-       name: "*"
-       state: latest
+  #- name: yum update
+  #  yum:
+  #    name: "*"
+  #    state: latest
    - name: Installing package
      yum: 
        name:

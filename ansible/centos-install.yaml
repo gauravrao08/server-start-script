@@ -1,8 +1,11 @@
 ---
 - hosts: deploy
-  remote_user: root
+  #remote_user: centos
+  become: true
+  become_method: sudo
+  become_user: root
   vars:
-    php_version: php7.3
+    php_version: php5.6
   tasks:      
    - name: yum update
      yum:
@@ -31,8 +34,6 @@
          - links
          - lsof
          - sysstat
-         - zip
-         - unzip
          - sysstat
          - curl-devel
        state: present
@@ -40,7 +41,6 @@
      yum:
        name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
        state: installed
-     #shell: yum --enablerepo=remi install redis
    - name: installing redis
      yum: 
        name: redis
@@ -53,21 +53,12 @@
    - name: Disable SELinux
      selinux:
        state: disabled
-     #replace:
-       #path: /etc/selinux/config
-       #regexp: 'enforcing'
-       #replace: "disabled"
    - name: time set in host machine
      file: path=/etc/localtime state=absent
      file:
        src: /usr/share/zoneinfo/Asia/Kolkata
        dest: /etc/localtime
        state: link
-       #- name: Stop and disable firewalld.
-       #service:
-       #name: firewalld
-       #state: stopped
-       #enabled: False
    - name: start and enable httpd
      service:
        name: httpd
@@ -170,10 +161,6 @@
    - name: Install package 7.4
      shell: yum-config-manager --enable remi-php74
      when: php_version == "php7.4"
-   - name: Install package 7.3
-     shell: yum-config-manager --enable remi-php73
-     when: php_version == "php7.3"
-     
    - name: install php package
      yum: 
        state: present
@@ -198,22 +185,15 @@
          - php-redis
          - php-imap
          - php-tcpdf
+         - php-pecl-mongo
          - php-pecl-mongodb
          - php-pecl-memcache
          - php-fileinfo
-           #- composer
+         - composer
          - php-fpm
          - php-mysqlnd
          - php-json
          - php-mongodb  
-         - php-xmlrpc
-         - php-snmp
-         - php-odbc
-         - php-pdo
-         - php-pecl-imagick
-         - php-gmp
-         - php-pecl-apcu
-         - php-gd
    - name: expose_php off
      lineinfile:
        path: /etc/php.ini

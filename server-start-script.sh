@@ -20,7 +20,7 @@ install()
 
 #:-basic packages
  	yum update -y ; yum install epel-release -y;
-	Yum install -y wget curl traceroute telnet ;
+	yum install -y wget curl traceroute telnet ;
  	yum groupinstall  -y "Development Tools";
  	yum install -y yum-utils  httpd openssl vim lynx openssl-devel;
 	service httpd start && chkconfig httpd on ;	
