@@ -5,6 +5,9 @@ or
 export PATH="$PATH:/bin"
 or
 export PATH="$PATH:/usr/bin"
+
+
+sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 ====================================
 
 # Creating Python Virtual Environment in Linux 
