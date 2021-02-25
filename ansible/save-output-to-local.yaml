@@ -1,0 +1,45 @@
+---
+- hosts: localhost
+  tasks:
+    - shell: /tmp/foo
+      register: foo_result
+      ignore_errors: True
+    - local_action: copy content= dest=file
+
+
+      or 
+    - local_action:
+        module: copy
+        content: "{{ foo_result }}"
+        dest: /path/to/destination/file
+
+        ##        ####        ###########################
+        
+---
+- hosts: if you want to execute task in batch; means in group
+  serial: 5 ##this will execute the task on group of 5 machine and then next 5 machine
+  tasks:
+ 
+          #######################################
+#if you want to execute task on 5 machine and next 5 machine
+ansible-playbook -i invertory file.yaml --forks=5
+
+################################
+suppose you want to execute the task like creting ec2 machine or RDS then it will take time and wait to finish the task to complete the task
+
+---
+- name: Run tasks in parallel
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Pretend to create instance
+      command: "sleep {{ item }}"  # Instead of calling a long running operation at a cloud provider, we just sleep.
+      with_items:
+        - 6
+        - 8
+        - 7
+      register: _create_instances
+      async: 600  # Maximum runtime in seconds. Adjust as needed.
+      poll: 0  # Fire and continue (never poll)
+

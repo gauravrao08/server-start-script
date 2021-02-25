@@ -1,0 +1,72 @@
+---
+- hosts: deploy
+  #remote_user: centos
+  become: true
+  become_method: sudo
+  become_user: root
+  tasks:      
+   - name: Installing epel
+     yum:
+       name:
+         - epel-release
+       state: present
+   - name: Installing nagios
+     yum:
+       name:
+         - nrpe
+         - nagios-plugins-all
+       state: present
+   - name: add nagios IP
+     lineinfile:
+       path: /etc/nagios/nrpe.cfg
+       regexp: '^allowed_hosts='
+       line: allowed_hosts=172.30.10.131
+   - name: allow dont blame nrpe
+     lineinfile:
+       path: /etc/nagios/nrpe.cfg
+       regexp: '^dont_blame_nrpe='
+       line: dont_blame_nrpe=1
+
+   - name: delete command from cfg file
+     lineinfile:
+       path: /etc/nagios/nrpe.cfg
+       regexp: '^command'
+       state: absent
+     tags: delete_command
+   - name: add command from cfg file
+     lineinfile:
+       path: /etc/nagios/nrpe.cfg
+       line: "command_timeout=60"
+       state: present
+     tags: add_command
+   - name: add command in nagios nrpe
+     lineinfile:
+       dest: /etc/nagios/nrpe.cfg
+       line: "{{ item }}"
+     with_items:
+       - 'command[check_users]=/usr/lib64/nagios/plugins/check_users $ARG1$'
+       - 'command[check_load]=/usr/lib64/nagios/plugins/check_load $ARG1$'
+       - 'command[check_disk]=/usr/lib64/nagios/plugins/check_disk $ARG1$'
+       - 'command[check_swap]=/usr/lib64/nagios/plugins/check_swap $ARG1$'
+       - 'command[check_cpu_stats]=/usr/lib64/nagios/plugins/check_cpu_stats.sh $ARG1$'
+       - 'command[check_memory]=/usr/lib64/nagios/plugins/check_memory  $ARG1$'
+       - 'command[check_service]=/usr/lib64/nagios/plugins/check_service  $ARG1$'
+       - 'command[check_connection.pl]=/usr/lib64/nagios/plugins/check_connection.pl'
+       - 'command[check_inode]=/usr/lib64/nagios/plugins/check_inode $ARG1$'
+       - 'command[uptime]=/usr/lib64/nagios/plugins/uptime $ARG1$'
+   - name: copy script of memory
+     copy:
+      src: /home/gauravyada/Downloads/nagios_pugin/check_memory
+      dest: /usr/lib64/nagios/plugins/
+      mode: a+x
+   - name: start nrpe
+     service:
+      name: nrpe
+      state: started
+     tags: start_nrpe
+   - name: enable nrpe
+     service:
+      name: nrpe
+      enabled: yes
+     tags: enable_nrpe
+

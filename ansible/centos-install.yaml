@@ -74,6 +74,7 @@
        - 'Header set X-Frame-Options SAMEORIGIN'
        - 'Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"'
        - 'Header edit Set-Cookie ^(.*)$ $1;HttpOnly;Secure'
+       - 'TraceEnable Off'
    - name: add mongo repo
      yum_repository:
        name: mongo-repo

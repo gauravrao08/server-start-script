@@ -2,12 +2,14 @@
 - hosts: deploy
   remote_user: root
   vars:
-    php_version: php7.3
+    php_version: php7.4
   tasks:      
    - name: yum update
      yum:
        name: "*"
        state: latest
+     tags:
+       - yumupdate
    - name: Installing package
      yum: 
        name:
@@ -36,20 +38,24 @@
          - sysstat
          - curl-devel
        state: present
+     ignore_errors: yes
    - name: enable redis for rpm
      yum:
        name: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
        state: installed
      #shell: yum --enablerepo=remi install redis
+     tags: redis
    - name: installing redis
      yum: 
        name: redis
        state: present  
+     tags: redis
    - name: disable selinux permanent config file
      lineinfile:
        path: /etc/selinux/config
        regexp: '^SELINUX='
        line: SELINUX=disabled
+     tags: selinux 
    - name: Disable SELinux
      selinux:
        state: disabled
@@ -57,6 +63,7 @@
        #path: /etc/selinux/config
        #regexp: 'enforcing'
        #replace: "disabled"
+     tags: selinux
    - name: time set in host machine
      file: path=/etc/localtime state=absent
      file:
@@ -73,6 +80,7 @@
        name: httpd
        state: started
        enabled: yes
+     tags: start_apache
    - name: apache security
      lineinfile:
        dest: /etc/httpd/conf/httpd.conf
@@ -83,6 +91,8 @@
        - 'Header set X-Frame-Options SAMEORIGIN'
        - 'Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains"'
        - 'Header edit Set-Cookie ^(.*)$ $1;HttpOnly;Secure'
+       - 'FileETag None'
+       - 'Header set X-XSS-Protection "1; mode=block"'
    - name: add mongo repo
      yum_repository:
        name: mongo-repo
@@ -105,7 +115,9 @@
        #mode: '0755'
        #owner: deployer
        #group: deployer
- 
+     tags: 
+       - mongo
+       - mongo_start 
    - name: deployer user add
      user:
        name: deployer
@@ -167,13 +179,15 @@
    - name: Install package 7.2
      shell: yum-config-manager --enable remi-php72
      when: php_version == "php7.2"
+     tags: php7.2
    - name: Install package 7.4
      shell: yum-config-manager --enable remi-php74
      when: php_version == "php7.4"
+     tags: php7.4
    - name: Install package 7.3
      shell: yum-config-manager --enable remi-php73
-     when: php_version == "php7.3"
-     
+     when: php_version == "php7.3" 
+     tags: php7.3
    - name: install php package
      yum: 
        state: present
@@ -214,6 +228,8 @@
          - php-gmp
          - php-pecl-apcu
          - php-gd
+     ignore_errors: yes
+     tags: php7.4
    - name: expose_php off
      lineinfile:
        path: /etc/php.ini
